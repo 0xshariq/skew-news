@@ -1,5 +1,5 @@
 {
-  "name": "jsm-skew",
+  "name": "skew_news",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@ai-sdk/openai": "^4.0.11",
+    "@ai-sdk/google": "^4.0.44",
     "@clerk/nextjs": "^7.5.17",
     "@supabase/supabase-js": "^2.110.2",
     "ai": "^7.0.22",
@@ -25,6 +25,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@posthog/wizard": "^2.62.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

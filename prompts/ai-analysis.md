@@ -51,14 +51,14 @@ relation).
   pipeline → return summary; `force-dynamic`, `maxDuration = 300`).
 - `lib/supabase/server.ts` — `createServiceClient()` (server-only).
 - `.env.example` — has admin/supabase/oxylabs vars but is **missing**
-  `OPENAI_API_KEY` and `ANALYSIS_BATCH_SIZE`.
+  `GEMINI_API_KEY` and `ANALYSIS_BATCH_SIZE`.
 - `package.json` — `ai` and `@ai-sdk/openai` are **not installed**; `zod@4.4.3`
   present transitively but not a direct dependency.
 
 ## Decisions / assumptions
 
 1. **Provider:** OpenAI via the Vercel AI SDK, per AGENTS.md §6/§21 (mandatory —
-   `OPENAI_API_KEY`, `@ai-sdk/openai`). Not Claude, despite general defaults —
+   `GEMINI_API_KEY`, `@ai-sdk/openai`). Not Claude, despite general defaults —
    the project rules override.
 2. **Model:** default to `gpt-4o-mini` (cost-appropriate for classification-style
    analysis), stored in one centralized constant and saved to
@@ -93,7 +93,7 @@ relation).
 ## Files likely to change / add
 
 - `package.json` / `package-lock.json` — add `ai`, `@ai-sdk/openai`, `zod`.
-- `.env.example` — add `OPENAI_API_KEY` (server only) and `ANALYSIS_BATCH_SIZE`
+- `.env.example` — add `GEMINI_API_KEY` (server only) and `ANALYSIS_BATCH_SIZE`
   (optional, default 5). Keep in sync with the §21 table.
 - `lib/ai/schema.ts` (new) — Zod schema + inferred type for the AI analysis
   output (summary, sentiment score/label, framing label, three percentages,
@@ -134,7 +134,7 @@ relation).
 
 ## Security requirements
 
-- `OPENAI_API_KEY` server-only; never `NEXT_PUBLIC_`. Add to `.env.example` and
+- `GEMINI_API_KEY` server-only; never `NEXT_PUBLIC_`. Add to `.env.example` and
   keep the §21 table in sync.
 - Do not expose service role, OpenAI, or admin secret to the browser.
 - Admin secret via header only, never query string; `401` on missing/invalid.
@@ -167,7 +167,7 @@ relation).
 
 ## Manual test steps (after implementation)
 
-1. Ensure `OPENAI_API_KEY` and `SKEW_ADMIN_SECRET` are set in `.env.local`, and
+1. Ensure `GEMINI_API_KEY` and `SKEW_ADMIN_SECRET` are set in `.env.local`, and
    at least a few scraped-but-unanalyzed articles exist (run `/api/scrape` first
    if needed). Start `npm run dev` and **watch the dev-server terminal** — batch
    progress logs there (§17).
