@@ -1,21 +1,21 @@
 import "server-only";
 
 import { generateObject } from "ai";
-import { openai } from "@ai-sdk/openai";
+import { google } from "@ai-sdk/google";
 
 import type { Article } from "@/lib/supabase/types";
 import { analysisSchema, type AnalysisOutput } from "./schema";
 
 /**
  * AI analysis layer (AGENTS.md §19). One `generateObject` call per article using
- * OpenAI (mandated by §6/§21) with the Zod schema forcing structured, validated
- * output. Server-only — never reaches browser code (§21). Retry-once-then-fail
- * is handled by the orchestrator (`lib/pipeline/analyze.ts`); this returns a
- * typed success or failure and never throws.
+ * Google Gemini with the Zod schema forcing structured, validated output.
+ * Server-only — never reaches browser code (§21).
+ * Retry-once-then-fail is handled by the orchestrator
+ * (`lib/pipeline/analyze.ts`); this returns a typed success or failure and never throws.
  */
 
 /** Analysis model. Centralized so §19's `model` field and cost stay in one place. */
-export const ANALYSIS_MODEL = "gpt-4o-mini";
+export const ANALYSIS_MODEL = "gemini-2.5-flash";
 
 /** Cap article text sent to the model to bound tokens/cost on long pages. */
 const MAX_TEXT_CHARS = 12_000;
@@ -44,6 +44,7 @@ export type AnalyzeArticleResult =
 
 function buildPrompt(article: Article): string {
   const body = article.raw_text.slice(0, MAX_TEXT_CHARS);
+
   return [
     `TITLE: ${article.title}`,
     `PUBLISHED: ${article.published_at}`,
@@ -59,12 +60,16 @@ export async function analyzeArticle(
 ): Promise<AnalyzeArticleResult> {
   try {
     const { object } = await generateObject({
-      model: openai(ANALYSIS_MODEL),
+      model: google(ANALYSIS_MODEL),
       schema: analysisSchema,
       system: SYSTEM_PROMPT,
       prompt: buildPrompt(article),
     });
-    return { ok: true, output: object };
+
+    return {
+      ok: true,
+      output: object,
+    };
   } catch (err) {
     return {
       ok: false,
