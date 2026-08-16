@@ -246,6 +246,8 @@ function shape(row: RawRow): ArticleWithRelations | null {
  * unanalyzed articles never surface. Uses the `!inner` embed hint rather than a
  * joined-column filter (AGENTS.md §21 gotcha).
  */
+export const HOME_ARTICLE_LIMIT = 60;
+
 export async function getHomeArticles(): Promise<ArticleWithRelations[]> {
   const supabase = createServiceClient();
 
@@ -253,7 +255,8 @@ export async function getHomeArticles(): Promise<ArticleWithRelations[]> {
     .from("articles")
     .select("*, sources(*), article_analyses!inner(*)")
     .not("analyzed_at", "is", null)
-    .order("published_at", { ascending: false });
+    .order("published_at", { ascending: false })
+    .limit(HOME_ARTICLE_LIMIT);
 
   if (error) {
     throw new Error(`Failed to load home articles: ${error.message}`);
@@ -262,6 +265,21 @@ export async function getHomeArticles(): Promise<ArticleWithRelations[]> {
   return (data ?? [])
     .map((row) => shape(row as unknown as RawRow))
     .filter((row): row is ArticleWithRelations => row !== null);
+}
+
+/** Count manually populated articles that have not been analyzed yet. */
+export async function getPendingArticleCount(): Promise<number> {
+  const supabase = createServiceClient();
+  const { count, error } = await supabase
+    .from("articles")
+    .select("id", { count: "exact", head: true })
+    .is("analyzed_at", null);
+
+  if (error) {
+    throw new Error(`Failed to count pending articles: ${error.message}`);
+  }
+
+  return count ?? 0;
 }
 
 /**

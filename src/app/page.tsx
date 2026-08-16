@@ -3,13 +3,19 @@ import { SiteHeader } from "@/components/layout/site-header";
 import { CategoryBar } from "@/components/layout/category-bar";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { NewsCard } from "@/components/ui/news-card";
-import { getHomeArticles } from "@/lib/supabase/queries/articles";
+import {
+  getHomeArticles,
+  getPendingArticleCount,
+} from "@/lib/supabase/queries/articles";
 import { toCardView } from "@/lib/supabase/mappers";
 
 export const dynamic = "force-dynamic";
 
 const Home = async () => {
-  const rows = await getHomeArticles();
+  const [rows, pendingCount] = await Promise.all([
+    getHomeArticles(),
+    getPendingArticleCount(),
+  ]);
   const articles = rows.map(toCardView);
 
   return (
@@ -23,7 +29,9 @@ const Home = async () => {
 
         {articles.length === 0 ? (
           <p className="mt-6 text-body-md text-text-secondary">
-            No analyzed articles yet — run the pipeline to populate the feed.
+            {pendingCount > 0
+              ? `${pendingCount} article${pendingCount === 1 ? " is" : "s are"} waiting for analysis. Check back after the next pipeline run.`
+              : "No articles are available yet. Run the pipeline to populate the feed."}
           </p>
         ) : (
           <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

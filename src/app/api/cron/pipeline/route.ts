@@ -6,8 +6,9 @@ import { runCronPipeline } from "@/lib/pipeline/cron";
  * GET /api/cron/pipeline (AGENTS.md §14/§18). Internal-only automatic pipeline:
  * process scheduled results, then run AI analysis. Vercel Cron always sends GET,
  * so this is the one GET action exception. Protected by `CRON_SECRET` (injected
- * by Vercel) — a missing/wrong secret returns 401 in production. In local dev the
- * check is skipped so the route can be curled. Never guarded by SKEW_ADMIN_SECRET.
+ * by Vercel) — a missing/wrong secret returns 401 outside explicit local
+ * development. Local bypass requires SKEW_ALLOW_LOCAL_CRON=true. Never guarded
+ * by SKEW_ADMIN_SECRET.
  */
 
 export const dynamic = "force-dynamic";
@@ -19,7 +20,10 @@ export const maxDuration = 300;
  * local testing (§18).
  */
 function isCronAuthorized(request: Request): boolean {
-  if (process.env.NODE_ENV !== "production") return true;
+  const isExplicitLocalDevelopment =
+    process.env.NODE_ENV === "development" &&
+    process.env.SKEW_ALLOW_LOCAL_CRON === "true";
+  if (isExplicitLocalDevelopment) return true;
 
   const secret = process.env.CRON_SECRET;
   if (!secret) return false;
@@ -36,7 +40,8 @@ export async function GET(request: Request) {
     const summary = await runCronPipeline();
     return NextResponse.json(summary, { status: 200 });
   } catch (err) {
-    console.error("[cron] pipeline failed:", err);
+    const kind = err instanceof Error ? err.name : "UnknownError";
+    console.error(`[cron] pipeline failed (${kind})`);
     return NextResponse.json(
       { error: "Cron pipeline failed", status: "failed" },
       { status: 500 },
