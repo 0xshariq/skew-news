@@ -29,6 +29,15 @@ import type {
 
 /** Default valid articles inserted per source (§16). */
 export const DEFAULT_LIMIT_PER_SOURCE = 10;
+export const MAX_LIMIT_PER_SOURCE = 10;
+
+export function normalizeLimitPerSource(value: unknown): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return DEFAULT_LIMIT_PER_SOURCE;
+  }
+  return Math.min(MAX_LIMIT_PER_SOURCE, Math.max(1, Math.floor(value)));
+}
+
 /**
  * Detail pages scraped per source is capped well above the target so rejects
  * don't starve the limit, but the run stops once the limit is inserted.
@@ -202,10 +211,7 @@ export async function runManualScrape(
   options: ScrapeOptions = {},
   startedAtMs: number = Date.now(),
 ): Promise<ScrapeSummary> {
-  const limitPerSource =
-    options.limitPerSource && options.limitPerSource > 0
-      ? options.limitPerSource
-      : DEFAULT_LIMIT_PER_SOURCE;
+  const limitPerSource = normalizeLimitPerSource(options.limitPerSource);
 
   console.info("[scrape] manual scrape started");
   const sources = await selectSources(options.sources);
@@ -224,12 +230,11 @@ export async function runManualScrape(
       const { html } = await fetchHtml(source.listing_url);
       console.info(`[scrape] ${source.name}: homepage fetched`);
       await processSourceHtml(source, html, limitPerSource, result, reasons);
-    } catch (err) {
-      result.error = err instanceof Error ? err.message : "unknown error";
-      console.error(
-        `[scrape] ${source.name}: source failed — ${result.error}`,
-      );
-    }
+  } catch (err) {
+    result.error = "source failed";
+    const kind = err instanceof Error ? err.name : "UnknownError";
+    console.error(`[scrape] source failed (${kind})`);
+  }
     results.push(result);
   }
 

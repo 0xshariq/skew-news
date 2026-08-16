@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 
 import { isAuthorized } from "@/lib/api/admin-auth";
-import { runManualScrape } from "@/lib/pipeline/scrape";
+import {
+  normalizeLimitPerSource,
+  runManualScrape,
+} from "@/lib/pipeline/scrape";
 import { getPostHogClient } from "@/lib/posthog-server";
 import type { ScrapeOptions } from "@/lib/pipeline/types";
 
@@ -22,11 +25,7 @@ function parseOptions(body: unknown): ScrapeOptions {
     ? record.sources.filter((s): s is string => typeof s === "string")
     : undefined;
 
-  const limitPerSource =
-    typeof record.limitPerSource === "number" &&
-    Number.isFinite(record.limitPerSource)
-      ? record.limitPerSource
-      : undefined;
+  const limitPerSource = normalizeLimitPerSource(record.limitPerSource);
 
   return { sources, limitPerSource };
 }
@@ -67,7 +66,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(summary, { status: 200 });
   } catch (err) {
-    console.error("[scrape] run failed:", err);
+    const kind = err instanceof Error ? err.name : "UnknownError";
+    console.error(`[scrape] run failed (${kind})`);
     return NextResponse.json(
       { error: "Scrape failed", status: "failed" },
       { status: 500 },
