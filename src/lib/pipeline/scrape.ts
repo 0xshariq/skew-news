@@ -28,7 +28,7 @@ import type {
  */
 
 /** Default valid articles inserted per source (§16). */
-export const DEFAULT_LIMIT_PER_SOURCE = 5;
+export const DEFAULT_LIMIT_PER_SOURCE = 10;
 /**
  * Detail pages scraped per source is capped well above the target so rejects
  * don't starve the limit, but the run stops once the limit is inserted.
@@ -234,7 +234,14 @@ export async function runManualScrape(
   }
 
   const durationMs = Date.now() - startedAtMs;
-  const summary = aggregate(results, "completed", durationMs, reasons);
+  const failedSources = results.filter((result) => result.error).length;
+  const status: ScrapeSummary["status"] =
+    failedSources === 0
+      ? "completed"
+      : failedSources === results.length
+        ? "failed"
+        : "partial";
+  const summary = aggregate(results, status, durationMs, reasons);
 
   console.info("[scrape] manual scrape completed", summary);
   await createLog({
