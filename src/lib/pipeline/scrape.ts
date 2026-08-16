@@ -28,7 +28,7 @@ import type {
  */
 
 /** Default valid articles inserted per source (§16). */
-export const DEFAULT_LIMIT_PER_SOURCE = 5;
+export const DEFAULT_LIMIT_PER_SOURCE = 10;
 /**
  * Detail pages scraped per source is capped well above the target so rejects
  * don't starve the limit, but the run stops once the limit is inserted.

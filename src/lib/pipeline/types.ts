@@ -80,10 +80,12 @@ export interface ScheduleSyncSummary {
   schedules: ScheduleSyncResult[];
 }
 
-/** Combined result of the automatic cron pipeline (§18): process then analyze. */
+/** Combined result of the automatic cron pipeline (§18): scrape, process, then analyze. */
 export interface CronPipelineSummary {
   status: "completed" | "failed";
-  /** Scrape/process step summary, or an error message if it threw. */
+  /** Daily active-source scrape summary, or an error message if it threw. */
+  scrape: ScrapeSummary | { status: "failed"; error: string };
+  /** Scheduled-result processing summary, or an error message if it threw. */
   process: ScrapeSummary | { status: "failed"; error: string };
   /** Analysis step summary, or an error message if it threw. */
   analyze: AnalysisSummary | { status: "failed"; error: string };
