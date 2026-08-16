@@ -23,6 +23,7 @@ function isCronAuthorized(request: Request): boolean {
   const isExplicitLocalDevelopment =
     process.env.NODE_ENV === "development" &&
     process.env.SKEW_ALLOW_LOCAL_CRON === "true";
+
   if (isExplicitLocalDevelopment) return true;
 
   const secret = process.env.CRON_SECRET;
